@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="data\ebooks\kafka-trial.epub" />
+    <None Remove="data\prompts\imagegen.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="data\ebooks\kafka-trial.epub">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="data\prompts\imagegen.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="HtmlAgilityPack" Version="1.11.57" />
+    <PackageReference Include="OpenAI" Version="1.10.0" />
+    <PackageReference Include="VersOne.Epub" Version="3.3.1" />
+  </ItemGroup>
+
+</Project>

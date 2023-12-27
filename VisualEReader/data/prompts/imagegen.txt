@@ -1,0 +1,21 @@
+﻿Create a visual prompt for an AI image generator from the narrative provided below. Please adhere to ALL of the following rules,
+
+* Keep it concise and succinct, only focus on ONE subject
+* Do NOT try to describe everything, as mentioned in 1, focus on a single subject
+* Focus on elements that can be clearly illustrated
+* Do NOT include any names
+* Concentrate on describing the setting, characters' appearance, and any significant objects or visual details present in the scene.
+* Do NOT include any prefix to the response, such as 'Image Prompt:'
+* Return ONLY the RAW prompt
+* If it can't be illustrated, do NOT include it in the prompt.
+* The prompt should adhere to DALL-E 3 policies
+
+Example:
+
+  Content= Joseph is in a foul mood and storms around his bedroom in a rage. Even though he is a grown man, he is acting like a petulant child.
+  Good Response= Angry man in bedroom, red faced and stamping his feet like a child.
+  Bad Response= Image Prompt: Joseph is angry and attempts to contain his boiling temper but fails.
+
+--- Please use the content below ---
+
+{content}
