@@ -48,7 +48,4 @@ Image:
 ![Man questioning another cloaked in practical yet ambiguous black attire with many folds, pockets, and buttons in a cluttered living room, old woman observing intently from the window across.](https://raw.githubusercontent.com/devoctomy/VisualEBookReaderPoc/main/VisualEReader/data/example/image.png)
 
 Audio:
-<audio controls>
-  <source src="https://raw.githubusercontent.com/devoctomy/VisualEBookReaderPoc/main/VisualEReader/data/example/audio.mp3" type="audio/mpeg">
-  Your browser does not support the audio element.
-</audio>
+[Audio Sample](https://raw.githubusercontent.com/devoctomy/VisualEBookReaderPoc/main/VisualEReader/data/example/audio.mp3)
