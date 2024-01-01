@@ -38,6 +38,8 @@ The AI won't be able to hold state between images so you won't get consistency i
 
 Ideally this would all be done locally using an API based LLM, TTS and image generation (such as Stable Diffusion) as it is not feasible to run this on OpenAi services unless you have more money than sense.
 
+Output from Automatic1111 currently poor, needs tweaking to improve.
+
 ## Example (OpenAI)
 
 Source epub:
@@ -51,6 +53,16 @@ Image:
 
 Audio:
 [Audio Sample](https://raw.githubusercontent.com/devoctomy/VisualEBookReaderPoc/main/VisualEReader/data/example/audio.mp3)
+
+## Stable Diffusion Text to Image Generation
+
+By default this demo will use OpenAI for all AI functions. Stable Diffusion can be used via Automatic1111 API. I recommnd using the following,
+
+https://github.com/AbdBarho/stable-diffusion-webui-docker
+
+Once running, set 'useAutomatic1111' to true in 'Program.cs'. You may need to check the base url too, which defaults to 'http://127.0.0.1:7860'.
+
+I haven't done anything with the prompt yet to improve image quality, so you'll get pretty poor images back until this has been tweaked.
 
 ## Coqui TTS
 

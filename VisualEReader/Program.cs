@@ -1,11 +1,17 @@
 ﻿using HtmlAgilityPack;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Nodes;
 using System.Web;
 using VersOne.Epub;
 
 const string coquiTTsServerBaseUrl = "http://localhost:5002";
+const string automatic1111BaseUrl = "http://127.0.0.1:7860";
 const bool useCoqui = false;
+const bool useAutomatic111 = false;
 
 var id = Guid.NewGuid();
 
@@ -53,11 +59,22 @@ await foreach (var res in chat.StreamResponseEnumerableFromChatbotAsync())
 
 Console.WriteLine("Generating image from image prompt");
 await File.WriteAllTextAsync($"output/{id}/imageprompt.txt", response.ToString());
-var image = await api.ImageGenerations.CreateImageAsync(response.ToString(), OpenAI_API.Models.Model.DALLE3);
-var url = image.Data[0].Url;
-var httpClient = new HttpClient();
-var imageBytes = await httpClient.GetByteArrayAsync(url);
-await File.WriteAllBytesAsync($"output/{id}/image.png", imageBytes);
+if(!useAutomatic111)
+{
+    var image = await api.ImageGenerations.CreateImageAsync(response.ToString(), OpenAI_API.Models.Model.DALLE3);
+    var url = image.Data[0].Url;
+    var httpClient = new HttpClient();
+    var imageBytes = await httpClient.GetByteArrayAsync(url);
+    await File.WriteAllBytesAsync($"output/{id}/image.png", imageBytes);
+}    
+else
+{
+    var image = await Automatic1111T2IAsync(response.ToString(), 20, CancellationToken.None);
+    if(image != null)
+    {
+        await File.WriteAllBytesAsync($"output/{id}/image.png", image);
+    }
+}
 
 var ttsSource = useCoqui ? "Coqui" : "OpenAi";
 Console.WriteLine($"Generating audio using {ttsSource}");
@@ -98,6 +115,22 @@ string? TruncateText(string text, int maxLength)
     }
 
     return null;
+}
+
+async Task<byte[]?> Automatic1111T2IAsync(string prompt, int steps, CancellationToken cancellationToken)
+{
+    var payload = new
+    {
+        prompt,
+        steps
+    };
+    var url = $"{automatic1111BaseUrl}/sdapi/v1/txt2img";
+    var httpClient = new HttpClient();
+    var result = await httpClient.PostAsync(url, JsonContent.Create(payload), cancellationToken);
+    var response = await result.Content.ReadAsStringAsync();
+    var responseJson = JObject.Parse(response);
+    var imageBase64 = responseJson["images"].Value<JArray>()[0].Value<string>();
+    return Convert.FromBase64String(imageBase64);
 }
 
 async Task<Stream> CoquiTTSAsync(string text, CancellationToken cancellationToken)
