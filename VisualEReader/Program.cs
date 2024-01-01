@@ -1,9 +1,15 @@
 ﻿using HtmlAgilityPack;
+using System.Security.Cryptography;
 using System.Text;
+using System.Web;
 using VersOne.Epub;
+
+const string coquiTTsServerBaseUrl = "http://localhost:5002";
+const bool useCoqui = false;
 
 var id = Guid.NewGuid();
 
+Directory.CreateDirectory($"output/ttscache");
 Directory.CreateDirectory($"output/{id}");
 
 var openAiApiKey = Environment.GetEnvironmentVariable("OpenAiApiKey", EnvironmentVariableTarget.User);
@@ -53,10 +59,19 @@ var httpClient = new HttpClient();
 var imageBytes = await httpClient.GetByteArrayAsync(url);
 await File.WriteAllBytesAsync($"output/{id}/image.png", imageBytes);
 
-Console.WriteLine("Generating audio");
-var audioStream = await api.TextToSpeech.GetSpeechAsStreamAsync(truncatedParagraph);
-var output = File.OpenWrite($"output/{id}/audio.mp3");
-await audioStream.CopyToAsync(output);
+var ttsSource = useCoqui ? "Coqui" : "OpenAi";
+Console.WriteLine($"Generating audio using {ttsSource}");
+string textHash = ComputeSha256Hash(truncatedParagraph);
+var cachedAudioFilePath = $"output/ttscache/{textHash}.mp3";
+var audioFilePath = $"output/{id}/{textHash}.mp3";
+if(!File.Exists(cachedAudioFilePath))
+{
+    using var audioStream = useCoqui ? await CoquiTTSAsync(truncatedParagraph, CancellationToken.None) : await api.TextToSpeech.GetSpeechAsStreamAsync(truncatedParagraph);
+    using var output = File.OpenWrite(cachedAudioFilePath);
+    await audioStream.CopyToAsync(output);
+}
+
+File.Copy(cachedAudioFilePath, audioFilePath);
 
 Console.WriteLine($"Operation complete, press any key to exit Results available in 'output/{id}'.");
 
@@ -83,4 +98,30 @@ string? TruncateText(string text, int maxLength)
     }
 
     return null;
+}
+
+async Task<Stream> CoquiTTSAsync(string text, CancellationToken cancellationToken)
+{
+    var escapedText = HttpUtility.UrlEncode(text);
+    var url = $"{coquiTTsServerBaseUrl}/api/tts?text={escapedText}&speaker_id=ED%0A&style_wav";
+    var httpClient = new HttpClient();
+    return await httpClient.GetStreamAsync(url, cancellationToken);
+}
+
+static string ComputeSha256Hash(string rawData)
+{
+    // Create a SHA256   
+    using (SHA256 sha256Hash = SHA256.Create())
+    {
+        // ComputeHash - returns byte array  
+        byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
+
+        // Convert byte array to a string   
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            builder.Append(bytes[i].ToString("x2"));
+        }
+        return builder.ToString();
+    }
 }

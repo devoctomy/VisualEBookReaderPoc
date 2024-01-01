@@ -14,6 +14,8 @@ Getting started.
 The following should be generated,
 
 * 'output' directory
+* 'ttscache' directory within 'output' directory
+* {sha256}.mp3 = Within 'ttscache' directory. audio narration of shorttext.txt, {sha256} is the sha256 for the text passed into the TTS service.
 * directory for this specific session (unique guid) within 'output' directory.
 
 and within session output directory,
@@ -22,7 +24,7 @@ and within session output directory,
 * image.png = an image to represent shorttext.txt
 * imageprompt.txt = a prompt used to generate image.png
 * shorttext.txt = truncated version of fulltext.txt in order to keep below TTS 4096 max character limit
-* audio.mp3 = audio narration of shorttext.txt
+* {sha256}.mp3 = audio narration of shorttext.txt, {sha256} is the sha256 for the text passed into the TTS service.
 
 ## Known Issues
 
@@ -36,7 +38,7 @@ The AI won't be able to hold state between images so you won't get consistency i
 
 Ideally this would all be done locally using an API based LLM, TTS and image generation (such as Stable Diffusion) as it is not feasible to run this on OpenAi services unless you have more money than sense.
 
-## Example
+## Example (OpenAI)
 
 Source epub:
 https://www.epubbooks.com/book/560-trial
@@ -49,3 +51,17 @@ Image:
 
 Audio:
 [Audio Sample](https://raw.githubusercontent.com/devoctomy/VisualEBookReaderPoc/main/VisualEReader/data/example/audio.mp3)
+
+## Coqui TTS
+
+By default this demo will use OpenAI for all AI functions. Coqui can be used in replacement, following the instructions at the following page
+
+https://docs.coqui.ai/en/latest/docker_images.html
+
+Once running, set 'useCoqui' to true in 'Program.cs'. You may need to check the base url too, which defaults to 'http://localhost:5002'.
+
+> Personally I think this sounds awful, but it's free and still helps prove / refine the proof of concept.
+
+## TTS Cache
+
+All TTS is cached in the 'output/ttscache' folder and a copy made in the session folder for the content currently being generated.
