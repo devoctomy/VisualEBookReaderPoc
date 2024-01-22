@@ -1,10 +1,8 @@
 ﻿using HtmlAgilityPack;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json.Nodes;
 using System.Web;
 using VersOne.Epub;
 
@@ -12,28 +10,40 @@ const string coquiTTsServerBaseUrl = "http://localhost:5002";
 const string automatic1111BaseUrl = "http://127.0.0.1:7860";
 const bool useCoqui = false;
 const bool useAutomatic111 = false;
+const bool useForcedText = true;
+const string forcedText = "Bob Jovis leant against the wall, wearing his worn, tired leather jacket, it had seen better days.  He finished his cigarette and flicked the butt over the wall, as if he had done it a thousand times before, he probably had to be fair, he imagined a mountain of butts on the other side. Once he snapped out of his moment of day dreaming, he walked off into the cold, winter night."; // Set this to use an explicit piece of text as opposed to pulling one from the pdf
 
 var id = Guid.NewGuid();
 
 Directory.CreateDirectory($"output/ttscache");
 Directory.CreateDirectory($"output/{id}");
 
-var openAiApiKey = Environment.GetEnvironmentVariable("OpenAiApiKey", EnvironmentVariableTarget.User);
+var openAiApiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY", EnvironmentVariableTarget.User);
 var api = new OpenAI_API.OpenAIAPI(openAiApiKey);
 
-Console.WriteLine("Loading epub");
-var file = "data/ebooks/kafka-trial.epub"; // This should be changed to reflect the actual file you have put into data/ebooks folder. Mark as 'content' + 'copy always'
-var ebook = await EpubReader.ReadBookAsync(file);
+var firstParagraphText = string.Empty;
+if(!useForcedText && string.IsNullOrEmpty(forcedText))
+{
+    Console.WriteLine("Loading epub");
+    var file = "data/ebooks/kafka-trial.epub"; // This should be changed to reflect the actual file you have put into data/ebooks folder. Mark as 'content' + 'copy always'
+    var ebook = await EpubReader.ReadBookAsync(file);
 
-Console.WriteLine("Extracting paragraph content from 'Chapter One'");
-var content = ebook.ReadingOrder[3].Content;
-var html = new HtmlDocument();
-html.LoadHtml(content);
-var chapterOneParagraphs = html.DocumentNode.SelectNodes("/html/body/section[@class='chapter' and @title='Chapter One']/p");
-var firstParagraph = chapterOneParagraphs[0];
+    Console.WriteLine("Extracting paragraph content from 'Chapter One'");
+    var content = ebook.ReadingOrder[3].Content;
+    var html = new HtmlDocument();
+    html.LoadHtml(content);
+    var chapterOneParagraphs = html.DocumentNode.SelectNodes("/html/body/section[@class='chapter' and @title='Chapter One']/p");
+    var firstParagraph = chapterOneParagraphs[0];
+    firstParagraphText = firstParagraph.InnerText;
+}
+else
+{
+    Console.WriteLine("Using forced text");
+    firstParagraphText = forcedText;
+}
 
 Console.WriteLine("Truncating");
-var normalised = NormaliseText(firstParagraph.InnerText);
+var normalised = NormaliseText(firstParagraphText);
 var truncatedParagraph = TruncateText(normalised, 4096); // 4096 character limit for TTS
 if (string.IsNullOrEmpty(truncatedParagraph))
 {
@@ -41,7 +51,7 @@ if (string.IsNullOrEmpty(truncatedParagraph))
     return;
 }
 
-await File.WriteAllTextAsync($"output/{id}/fulltext.txt", firstParagraph.InnerText);
+await File.WriteAllTextAsync($"output/{id}/fulltext.txt", firstParagraphText);
 await File.WriteAllTextAsync($"output/{id}/shorttext.txt", truncatedParagraph);
 
 Console.WriteLine("Generating image prompt from extracted content via ChatGpt");
@@ -99,6 +109,11 @@ string NormaliseText(string text)
 
 string? TruncateText(string text, int maxLength)
 {
+    if(text.Length < maxLength)
+    {
+        return text;
+    }
+
     int curPos = text.IndexOf("  ");
     while(curPos < maxLength)
     {
